@@ -1,5 +1,5 @@
 # Google-Sample-work
-Analyst Sample
+Analyst 
 from docx import Document
 
 from docx.shared import Pt
