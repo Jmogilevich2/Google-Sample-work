@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import ttest_ind
+
+np.random.seed(42)
+n = 5000
+
+categories = ['ART_AND_DESIGN', 'AUTO_AND_VEHICLES', 'BEAUTY', 'BOOKS_AND_REFERENCE', 'BUSINESS', 
+              'COMICS', 'COMMUNICATION', 'DATING', 'EDUCATION', 'ENTERTAINMENT', 'EVENTS', 
+              'FINANCE', 'FOOD_AND_DRINK', 'HEALTH_AND_FITNESS', 'HOUSE_AND_HOME', 
+              'LIBRARIES_AND_DEMO', 'LIFESTYLE', 'GAME', 'FAMILY', 'MEDICAL', 'MUSIC_AND_AUDIO', 
+              'NEWS_AND_MAGAZINES', 'PHOTOGRAPHY', 'PRODUCTIVITY', 'SHOPPING', 'SOCIAL', 
+              'SPORTS', 'TOOLS', 'TRAVEL_AND_LOCAL', 'VIDEO_PLAYERS', 'WEATHER']
+
+data = {
+    'App': [f'App_{i}' for i in range(n)],
+    'Category': np.random.choice(categories, n),
+    'Rating': np.clip(np.random.normal(4.2, 0.6, n), 1.0, 5.0),
+    'Reviews': np.random.lognormal(4.5, 2.5, n).astype(int).clip(1, 50_000_000),
+    'Size': np.random.choice(['Varies with device', '10M', '20M', '30M', '5M', '15M', '25M'], n),
+    'Installs': np.random.choice([1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000], n),
+    'Type': np.random.choice(['Free', 'Paid'], n, p=[0.92, 0.08]),
+    'Price': np.random.choice([0.0, 0.99, 1.99, 2.99, 4.99, 9.99, 14.99], n),
+    'Content Rating': np.random.choice(['Everyone', 'Teen', 'Everyone 10+', 'Mature 17+', 'Adults only 18+'], n),
+}
+
+df = pd.DataFrame(data)
+df['Size_MB'] = df['Size'].apply(lambda x: np.nan if 'Varies' in x else float(x.replace('M', '')))
+
+# === SUMMARY STATISTICS (These are the exact numbers) ===
+print("Average Rating:", round(df['Rating'].mean(), 3))
+print("Free Apps %:", round((df['Type']=='Free').mean()*100, 2))
+print("Avg Installs:", f"{df['Installs'].mean():,.0f}")
+
+print("\nTop 5 Categories by Avg Installs:")
+print(df.groupby('Category')['Installs'].mean().sort_values(ascending=False).head(5).round(0))
+
+print("\nTop 5 Categories by Avg Rating:")
+print(df.groupby('Category')['Rating'].mean().sort_values(ascending=False).head(5).round(3))
+
+free = df[df['Type'] == 'Free']['Rating']
+paid = df[df['Type'] == 'Paid']['Rating']
+_, p_val = ttest_ind(free, paid, equal_var=False)
+print("Free vs Paid p-value:", round(p_val, 4))
